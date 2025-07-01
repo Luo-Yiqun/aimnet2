@@ -345,7 +345,10 @@ class SizeGroupedDataset:
                 sgroups.append(sg)
                 n = 0
                 sg = list()
-        sgroups[-1].extend(sg)
+        if len(sgroups) > 0:
+            sgroups[-1].extend(sg)
+        else:
+            sgroups.append(sg)
 
         # merge
         keys = self.datakeys()

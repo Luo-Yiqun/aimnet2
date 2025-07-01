@@ -5,6 +5,7 @@ from torch import Tensor
 
 def set_nb_mode(data: Dict[str, Tensor]) -> Dict[str, Tensor]:
     """Logic to guess and set the neighbor model."""
+    # What
     if "nbmat" in data:
         if data["nbmat"].ndim == 2:
             data["_nb_mode"] = torch.tensor(1)

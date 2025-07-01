@@ -1,5 +1,5 @@
 # required to be set
-run_name: ???
+run_name: aimnet2_trial
 
 data:
     # path to train and validation datasets
@@ -40,9 +40,9 @@ data:
                 # could be set to 'atoms', than 'batch_size' could be around 16384
                 batch_mode: molecules
                 shuffle: True
-                # for extra large datasets we want to do evaluation more often then onece per full epoch
+                # for extra large datasets we want to do evaluation more often than once per full epoch
                 # this value sets the size the epoch. `batches_per_epoch*batch_size` could be smaller or larger than the dataset size
-                batches_per_epoch: 10000
+                batches_per_epoch: -1 # 10000
         val:
             class: aimnet.data.SizeGroupedSampler
             kwargs:
@@ -114,7 +114,7 @@ trainer:
     trainer: aimnet.train.utils.default_trainer
     evaluator: aimnet.train.utils.default_evaluator
     # total number of epochs to train
-    epochs: 100
+    epochs: 2
 
 # perdicaly save chechpoints, set to null to disable
 checkpoint:
@@ -127,10 +127,10 @@ checkpoint:
 # wandb logger
 wandb:
     init: 
-        name: ${run_name}
-        mode: offline
+        name: trial
+        mode: online
         entity: null
-        project: null
+        project: AIMNet2
         notes: null
     watch_model:
         log: all

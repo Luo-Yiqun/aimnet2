@@ -89,20 +89,21 @@ class AEVSV(nn.Module):
         return data
 
     def _calc_aev(self, r_ij: Tensor, d_ij: Tensor, data: Dict[str, Tensor]) -> Tuple[Tensor, Tensor, Tensor]:
+        # n and m can be different because of the neighbor mask.
         fc_ij = ops.cosine_cutoff(d_ij, self.rc_s)  # (..., m)
         fc_ij = nbops.mask_ij_(fc_ij, data, 0.0)
         gs = ops.exp_expand(d_ij, self.shifts_s, self.eta_s) * \
-            fc_ij.unsqueeze(-2)  # (..., nshifts, m) * (..., 1, m) -> (..., nshifts, m)
+            fc_ij.unsqueeze(-2)  # (b, n, nshifts, m) * (b, n, 1, m) -> (b, n, nshifts, m)
         u_ij = r_ij.mT.contiguous() / \
-            d_ij.unsqueeze(-2)  # (..., 3, m) / (..., 1, m) -> (..., 3, m)
+            d_ij.unsqueeze(-2)  # (b, n, 3, m) / (b, n, 1, m) -> (b, n, 3, m)
         if self._dual_basis:
             fc_ij = ops.cosine_cutoff(d_ij, self.rc_v)
             gsv = ops.exp_expand(d_ij, self.shifts_v, self.eta_v) * fc_ij.unsqueeze(-2)
             gv = gsv.unsqueeze(-2) * u_ij.unsqueeze(-3)
         else:
-            # (..., g, 1, m), (..., m, 3) -> (..., g, 3, m)
+            # (b, n, nshifts, 1, m), (b, n, 1, m, 3) -> (b, n, nshifts, 3, m)
             gv = gs.unsqueeze(-2) * u_ij.unsqueeze(-3)
-        return u_ij, gs, gv
+        return u_ij, gs, gv # gv is gu in the paper
 
 
 class ConvSV(nn.Module):
@@ -167,7 +168,7 @@ class ConvSV(nn.Module):
                 avf_v = torch.einsum("...gam,...gdm,agh->...ahd", a, gv, agh)
             else:
                 avf_v = torch.einsum("...ma,...gdm,agh->...ahd", a, gv, agh)
-            avf.append(avf_v.pow(2).sum(-1).flatten(-2, -1))
+            avf.append(avf_v.pow(2).sum(-1).flatten(-2, -1)) # Again, why pow(2)?
         return torch.cat(avf, dim=-1)
 
 

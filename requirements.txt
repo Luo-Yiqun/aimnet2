@@ -1,7 +1,7 @@
-pytorch >= 2.1
+pytorch >= 2.1 # torch
 opt_einsum
 click
-ignite >= 0.5
+ignite >= 0.5 # pytorch-ignite==0.5.1
 numpy >= 1.2 
 omegaconf >= 2.0
 pyyaml

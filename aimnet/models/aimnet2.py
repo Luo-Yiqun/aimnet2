@@ -28,7 +28,7 @@ class AIMNet2(AIMNet2Base):
         self.nshifts_s = nshifts_s
         self.d2features = d2features
 
-        self.afv = Embedding(num_embeddings=64, embedding_dim=nfeature, padding_idx=0)
+        self.afv = Embedding(num_embeddings=64, embedding_dim=nfeature, padding_idx=0) # Why fixed to 64?
 
         with torch.no_grad():
             nn.init.orthogonal_(self.afv.weight[1:])
@@ -58,6 +58,7 @@ class AIMNet2(AIMNet2Base):
             self.outputs = nn.ModuleDict(outputs)
         else:
             raise TypeError('`outputs` is not either list or dict')
+        # So, in AIMNet2, the output layers are not built-in?
         
     def _preprocess_spin_polarized_charge(self, data: Dict[str, Tensor]) -> Dict[str, Tensor]:
         assert 'mult' in data, "'mult' key is required for NSE if two channels for charge are not provided"
@@ -73,14 +74,14 @@ class AIMNet2(AIMNet2Base):
         return data
         
     def _prepare_in_a(self, data: Dict[str, Tensor]) -> Tensor:
-            a_i, a_j = nbops.get_ij(data['a'], data)
-            if self.d2features:
-                a_j = a_j.transpose(-3, -1).contiguous()
-            avf_a = self.conv_a(a_j, data['gs'], data['gv'])
-            if self.d2features:
-                a_i = a_i.flatten(-2, -1)
-            _in = torch.cat([a_i.squeeze(-2), avf_a], dim=-1)
-            return _in
+        a_i, a_j = nbops.get_ij(data['a'], data) # (b?, n, ??, 1), (b?, m, 1, ??)
+        if self.d2features:
+            a_j = a_j.transpose(-3, -1).contiguous()
+        avf_a = self.conv_a(a_j, data['gs'], data['gv'])
+        if self.d2features:
+            a_i = a_i.flatten(-2, -1)
+        _in = torch.cat([a_i.squeeze(-2), avf_a], dim=-1)
+        return _in
     
 
     def _prepare_in_q(self, data: Dict[str, Tensor]) -> Tensor:
@@ -97,7 +98,8 @@ class AIMNet2(AIMNet2Base):
             q = data['charges'] + _q
         else:
             q = _q
-        f = _f.pow(2)
+        # Why not add a something * softmax(q) here?
+        f = _f.pow(2) # Again, why not just use softmax(_f) here?
         q = ops.nse(data['charge'], q, f, data)
         data['charges'] = q
         data['a'] = data['a'] + delta_a.view_as(data['a'])
